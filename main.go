@@ -835,6 +835,29 @@ func main() {
 			},
 		},
 		{
+			Name:        "metadata",
+			Aliases:     []string{"md"},
+			Usage:       "获取文件/目录的元信息 (only support 1 x file/dir)",
+			UsageText:   app.Name + " meta <文件/目录1> <文件/目录2> <文件/目录3> ...",
+			Description: "默认获取工作目录元信息 + file 1st 256KB slice MD5/CRC32, only support 1 dir/file, output csv (,comma as seperator) format: ISdir,IfdirNull,FSID,MD5,Size,fdname,fdpath,ct,mt[,fn,size,md5,sliceMD5,CRC32]/",
+			Category:    "百度网盘",
+			Before:      reloadFn,
+			Action: func(c *cli.Context) error {
+				var (
+					ca = c.Args()
+					as []string
+				)
+				if len(ca) == 0 {
+					as = []string{""}
+				} else {
+					as = ca
+				}
+
+				pcscommand.RunGetMetaData(as...)
+				return nil
+			},
+		},
+		{
 			Name:      "rm",
 			Usage:     "删除文件/目录",
 			UsageText: app.Name + " rm <文件/目录的路径1> <文件/目录2> <文件/目录3> ...",
@@ -1488,6 +1511,79 @@ func main() {
 					Name:  "retry",
 					Usage: "导出失败的重试次数",
 					Value: 3,
+				},
+				cli.BoolFlag{
+					Name:  "r",
+					Usage: "递归导出",
+				},
+			},
+		},
+		{
+			Name:      "exportmetadata",
+			Aliases:   []string{"epmd"},
+			Usage:     "导出文件/目录",
+			UsageText: app.Name + " exportmetadata <文件/目录1> <文件/目录2> ...",
+			Description: `
+	导出网盘内的文件或目录 meta data + 1st 256KB sliceMD5/CRC32
+	output data csv (,comma as seperator) format:
+	IsDir,IfHasSubDir,FsID,MD5,Size,FDName,Path,Ctime,Mtime[,name,Size,MD5,SliceMD5,CRC32]
+	output log write to stdout and file
+	default:
+		--retry=0 (if 256KB slice not avalible, do not retry)
+		--data=BaiduPCS-Go_export_$unixTime_data.txt
+		--log=BaiduPCS-Go_export_$unixTime_log.txt
+	原理为秒传文件, 此操作会生成导出文件或目录的命令.
+
+	注意!!! :
+	无法导出 20GB 以上的文件!!
+	无法导出文件的版本历史等数据!!
+	并不是所有的文件都能导出成功, 程序会列出无法导出的文件列表.
+
+	示例:
+
+	导出当前工作目录:
+	BaiduPCS-Go export
+
+	导出所有文件和目录, 并设置新的根目录为 /root 
+	BaiduPCS-Go export -root=/root /
+
+	导出 /我的资源
+	BaiduPCS-Go export /我的资源
+`,
+			Category: "百度网盘",
+			Before:   reloadFn,
+			Action: func(c *cli.Context) error {
+				pcspaths := c.Args()
+				if len(pcspaths) == 0 {
+					pcspaths = []string{"."}
+				}
+
+				pcscommand.RunExportMetaData(pcspaths, &pcscommand.ExportMDOptions{
+					RootPath:  c.String("root"),
+					SavePathData:  c.String("data"),
+					SavePathLog:  c.String("log"),
+					MaxRerty:  c.Int("retry"),
+					Recursive: c.Bool("r"),
+				})
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "root",
+					Usage: "设置要导出文件或目录的根路径, 可以是相对路径",
+				},
+				cli.StringFlag{
+					Name:  "data",
+					Usage: "导出文件data信息的保存路径",
+				},
+				cli.StringFlag{
+					Name:  "log",
+					Usage: "导出log的保存路径",
+				},
+				cli.IntFlag{
+					Name:  "retry",
+					Usage: "导出失败的重试次数",
+					Value: 0,
 				},
 				cli.BoolFlag{
 					Name:  "r",
