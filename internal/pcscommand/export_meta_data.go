@@ -212,7 +212,7 @@ func RunExportMetaData(pcspaths []string, opt *ExportMDOptions) {
 
 			if len(fds) == 0 { // if dir empty, get dir meta
 				// write data
-				_, writeErr = fpExportData.Write(converter.ToBytes(fmt.Sprintf("%d,%d,%d,%s,%d,\"%s\",\"%s\",%d,%d,1,,,,,\n", Bool2int(task.fd.Isdir), Bool2int(task.fd.Ifhassubdir), task.fd.FsID, task.fd.MD5, task.fd.Size, task.fd.Filename, task.fd.Path, task.fd.Ctime, task.fd.Mtime)))
+				_, writeErr = fpExportData.Write(converter.ToBytes(fmt.Sprintf("%d,%d,%d,%s,%d,\"%s\",\"%s\",%d,%d,,,,,\n", Bool2int(task.fd.Isdir), Bool2int(task.fd.Ifhassubdir), task.fd.FsID, task.fd.MD5, task.fd.Size, task.fd.Filename, task.fd.Path, task.fd.Ctime, task.fd.Mtime)))
 					if writeErr != nil {
 						fmt.Printf("写入文件失败: %s\n", writeErr)
 						return // 直接返回
